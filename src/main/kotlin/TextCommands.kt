@@ -6,7 +6,7 @@ class TextCommands {
 }
 
 enum class textCommand{
-    removeAll,replace, add, enumerate,removeAmount, lowercase, uppercase,capitalize
+    removeAll,replace, add, enumerate,removeAmount, lowercase, uppercase,capitalize,removeUntil
 }
 
 fun removeAll(fileName: String) : String
@@ -29,10 +29,10 @@ fun add(fileName: String,toAdd: String,modifier: String) : String
 fun enumerate(fileName: String,index: Int,modifier: String): String
 {
     // TODO Add so that if many is modified it will be called as file-001 instead of file-1
-    if(modifier == "End") {
-        return fileName + index.toString();
+    if(modifier == "Start") {
+        return  index.toString()+fileName;
     }
-    return index.toString()+fileName;
+    return fileName+index.toString();
 }
 
 fun lowercase(fileName: String): String
@@ -44,7 +44,19 @@ fun uppercase(fileName: String): String
     return fileName.uppercase()
 }
 
-fun capitalize(fileName: String): String
+fun capitalize(fileName: String,modifier: String): String
 {
     return fileName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+}
+
+fun removeAmount(fileName: String,amount: Int,modifier: String): String
+{
+    // TODO
+    return fileName
+}
+
+fun removeUntil(fileName: String,amount: Int,modifier: String): String
+{
+    // TODO
+    return fileName
 }
