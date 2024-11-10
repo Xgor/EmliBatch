@@ -5,7 +5,7 @@ class TextCommands {
 
 }
 
-enum class textCommand{
+enum class TextCommand{
     removeAll,replace, add, enumerate,removeAmount, lowercase, uppercase,capitalize,removeUntil
 }
 

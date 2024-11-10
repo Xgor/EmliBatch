@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,23 +26,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 data class commandLayer(
-    var command: textCommand,
-    var value1: String,
-    var value2: String
+    var command: TextCommand,
+    var value1: String = "",
+    var value2: String = ""
 )
 
 @Composable
 fun CommandLayerList(
     list: List<commandLayer> ,
     onCloseTask: (commandLayer) -> Unit,
-    modifier: Modifier = Modifier
+    programViewModel: ProgramViewModel,
+//    updateNewName: (List<FileName>,SnapshotStateList<commandLayer>) -> Unit,
+    modifier: Modifier = Modifier,
 
 ) {
     LazyColumn(
         modifier = modifier
     ) {
         items(list) { c ->
-            CommandLayerItem(layer = c, onClose = { onCloseTask(c) })
+            CommandLayerItem(layer = c, onClose = { onCloseTask(c) },programViewModel = programViewModel)
         }
     }
 }
@@ -64,6 +67,7 @@ fun CommandLayerItem(layer: commandLayer, onClose: () -> Unit, modifier: Modifie
 @Composable
 fun CommandLayerItem(
     layer: commandLayer,
+    programViewModel: ProgramViewModel,
  //   checked: Boolean,
  //   value1: String,
  //   onCheckedChange: (Boolean) -> Unit,
@@ -102,12 +106,14 @@ fun CommandLayerItem(
                     onCheckedChange = onCheckedChange
                 )*/
                     when (layer.command) {
-                        textCommand.add ->{
+                        TextCommand.add ->{
                                 TextField(
                                 value = val1,
                                 onValueChange ={
                                     val1 = it
                                     layer.value1 = val1
+                                    programViewModel.updateNewName()
+                                   // filesList = updateNewName(filesList,functionList)
                                 },
               //              onValueChange = { value1 = it },
                                 label = { Text("Text")},
@@ -116,12 +122,13 @@ fun CommandLayerItem(
                                     .weight(1F)
                                     .padding(2.dp)
                         )}
-                        textCommand.replace ->{
+                        TextCommand.replace ->{
                             TextField(
                                 value = val1,
                                 onValueChange ={
                                     val1 = it
                                     layer.value1 = val1
+                                    programViewModel.updateNewName()
                                 },
                                 label = { Text("From") },
                                 maxLines = 1,
@@ -134,18 +141,19 @@ fun CommandLayerItem(
                                 onValueChange = {
                                     val2 = it
                                     layer.value2 = val2
+                                    programViewModel.updateNewName()
                                 },
                                 label = { Text("To") },
                                 maxLines = 1,
                                 modifier = Modifier.weight(1F)
 
                             )}
-            //            textCommand.enumerate -> TODO()
-                        textCommand.removeAmount -> TODO()
-            /*            textCommand.lowercase -> TODO()
-                        textCommand.uppercase -> TODO()
-                        textCommand.capitalize -> TODO()*/
-                        textCommand.removeUntil -> TODO()
+            //            TextCommand.enumerate -> TODO()
+                        TextCommand.removeAmount -> TODO()
+            /*            TextCommand.lowercase -> TODO()
+                        TextCommand.uppercase -> TODO()
+                        TextCommand.capitalize -> TODO()*/
+                        TextCommand.removeUntil -> TODO()
                         else ->
                             Text(text = "",
                                 modifier = Modifier.weight(1F))

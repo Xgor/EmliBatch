@@ -20,13 +20,35 @@ import javax.swing.JOptionPane
 import TextCommands
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-private fun getCommandList() = List(0) { i -> commandLayer(textCommand.removeAll, "","") }
+private fun getCommandList() = List(0) { i -> commandLayer(TextCommand.removeAll, "","") }
 
+/*
+class Test{
+    companion object{
+        var functionList = remember { getCommandList().toMutableStateList() }
+        var filesList by remember { mutableStateOf(listOf<FileName>()) }
+    }
+}
+*/
 @Composable
 @Preview
-fun App() {
+fun AppPreview()
+{
+    MaterialTheme {
+        App()
+    }
+}
+
+@Composable
+//@Preview
+fun App(programViewModel: ProgramViewModel = viewModel()) {
     var folderPath by remember { mutableStateOf("Select Folder") }
 
     var newNameField by remember { mutableStateOf("World") }
@@ -34,141 +56,137 @@ fun App() {
     var dropdownExpand by remember { mutableStateOf(false) }
     var canRename by remember { mutableStateOf(false) }
   //  var listOfFiles by remember { mutableStateOf(mutableListOf<fileListItem>()) }
+
     var listOfFiles by remember { mutableStateOf(listOf<fileListItem>()) }
 
+  //  var filesList by remember { programViewModel.GetFilesList() }
     var filesList by remember { mutableStateOf(listOf<FileName>()) }
-
     var functionList = remember { getCommandList().toMutableStateList() }
 
     val chooser = JFileChooser()
     chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
-
+/*
     var filesListState = remember {
         listOfFiles.toMutableStateList()
-    }
+    }*/
+    val gameUiState by programViewModel.uiState.collectAsState()
+ //   MaterialTheme {
+    Row(
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Column(modifier = Modifier.weight(1F)) {
+            Button(onClick = {
+                programViewModel.selectFolderPath()
+            }) {
+                Text(gameUiState.folderPath)
+            }
 
-    MaterialTheme {
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Column(modifier = Modifier.weight(1F)) {
-                Button(onClick = {
-                    val returnVal = chooser.showOpenDialog(null)
-                    if(returnVal == JFileChooser.APPROVE_OPTION) {
-                        folderPath = chooser.selectedFile.path
-                        val folder = File(chooser.selectedFile.path)
-                       // listOfFiles.clear()
-                        var fileList = mutableListOf<FileName>()
-                        for (file in folder.listFiles().asList()){
-                            listOfFiles += fileListItem(file,true)
-                            fileList.add(FileName(0,file.name,""))
+           // modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.TopStart)
+            CommandLayerList(gameUiState.commandList,onCloseTask = { task -> programViewModel.RemoveCommand(task) },programViewModel)
+            Box() {
+                IconButton(onClick = { dropdownExpand = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Localized description")
+                }
+
+                DropdownMenu(
+                    expanded = dropdownExpand,
+                    onDismissRequest = { dropdownExpand = false }
+                ) {
+                    DropdownMenuItem(
+                        content = { Text("add") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.add)
+
+   //                         functionList += commandLayer(TextCommand.add,"","")
+
+ //                           filesList = updateNewName(filesList,functionList)
                         }
+                    )
+                    DropdownMenuItem(
 
-                        filesList = fileList.toMutableStateList()
-                        filesListState = listOfFiles.toMutableStateList()
-                        canRename = true
-                    }
+                        content = { Text("removeAll") },
+                        onClick = {
+                            programViewModel.AddCommand(TextCommand.removeAll)
+//                            functionList += commandLayer(TextCommand.removeAll,"","")
+                            dropdownExpand = false
+ //                           filesList = updateNewName(filesList,functionList)
 
-                }) {
-                    Text(folderPath)
-                }
+                        }
+                    )
+                    DropdownMenuItem(
 
-               // modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.TopStart)
-                CommandLayerList(functionList,onCloseTask = { task -> functionList.remove(task) })
-                Box() {
-                    IconButton(onClick = { dropdownExpand = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "Localized description")
-                    }
+                        content = { Text("enumerate") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.enumerate)
 
-                    DropdownMenu(
-                        expanded = dropdownExpand,
-                        onDismissRequest = { dropdownExpand = false }
-                    ) {
-                        DropdownMenuItem(
-                            content = { Text("add") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.add,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
+                        }
+                    )
+                    DropdownMenuItem(
+                        content = { Text("replace") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.replace)
+                        }
+                    )
+                    DropdownMenuItem(
+                        content = { Text("lowercase") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.lowercase)
+                        }
+                    )
+                    DropdownMenuItem(
+                        content = { Text("uppercase") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.uppercase)
+                        }
+                    )
+                    DropdownMenuItem(
 
-                            content = { Text("removeAll") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.removeAll,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
+                        content = { Text("capitalize") },
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.capitalize)
+                        }
+                    )
+                    /*
+                    DropdownMenuItem(
 
-                            content = { Text("enumerate") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.enumerate,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            content = { Text("replace") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.replace,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            content = { Text("lowercase") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.lowercase,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            content = { Text("uppercase") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.uppercase,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
-
-                            content = { Text("capitalize") },
-                            onClick = {
-                                functionList += commandLayer(textCommand.capitalize,"","")
-                                dropdownExpand = false
-                            }
-                        )
-                        DropdownMenuItem(
-
-                            content = { Text("removeUntil") },
-                            onClick = { }
-                        )
-                        DropdownMenuItem(
-                            content = { Text("removeAmount") },
-                            onClick = { }
-                        )
-                    }
-                }
-
-
-                /*
-                LazyColumn() {
-                    items(functionList) { function ->
-                        Text(
-                            text = function.command.name,
-                        )
-                    }
-                }
-                */
-                Button(onClick = {
-                    renameFiles(listOfFiles,folderPath,functionList)
-                },
-                    enabled = canRename) {
-                    Text("rename")
+                        content = { Text("removeUntil") },
+                        onClick = { }
+                    )
+                    DropdownMenuItem(
+                        content = { Text("removeAmount") },
+                        onClick = { }
+                    )*/
                 }
             }
-            FileNamesList(filesList,modifier = Modifier.weight(1F))
+
+
+            /*
+            LazyColumn() {
+                items(functionList) { function ->
+                    Text(
+                        text = function.command.name,
+                    )
+                }
+            }
+            */
+            Button(onClick = {
+                programViewModel.renameFiles()
+              //  renameFiles(listOfFiles,folderPath,functionList)
+            },
+                enabled = gameUiState.canRename) {
+                Text("rename")
+            }
+        }
+        FileNamesList(gameUiState.fileList,modifier = Modifier.weight(1F), viewModel = programViewModel)
 
         }
-    }
+ //   }
 }
 
 //@Stable
@@ -181,45 +199,48 @@ data class fileListItem(
 @Composable
 fun FileNamesList(
     list: List<FileName> = remember { getFileNames() },
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,viewModel: ProgramViewModel
 
 ) {
     LazyColumn(
         modifier = modifier
     ) {
         items(list) { task ->
-            FileNameItem(taskName = task.label)
+            FileNameItem(task = task,viewModel= viewModel)
         }
     }
 }
 
-fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","") }
+fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","","") }
 
-data class FileName(val id: Int, val label: String,var newName: String)
+data class FileName(val id: Int, val oldName: String,var newName: String,var extension: String,var enabled: Boolean = true)
 
 
 
 @Composable
-fun FileNameItem(taskName: String, modifier: Modifier = Modifier) {
-    var checkedState by rememberSaveable { mutableStateOf(true) }
+fun FileNameItem(task: FileName, modifier: Modifier = Modifier,viewModel: ProgramViewModel) {
+    var checkedState by rememberSaveable { mutableStateOf(task.enabled) }
 
     FileNameItem(
-        taskName = taskName,
+        task = task,
         checked = checkedState,
-        onCheckedChange = { newValue -> checkedState = newValue },
-        onClose = {}, // we will implement this later!
+        onCheckedChange = { newValue ->
+            checkedState = newValue
+            viewModel.changeCheckedFile(task,newValue)
+                          },
         modifier = modifier,
+//       viewModel = viewModel
     )
 }
 
 
 @Composable
 fun FileNameItem(
-    taskName: String,
+    task: FileName,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    onClose: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+//    viewModel: ProgramViewModel
 ) {
     Row(
         modifier = modifier, verticalAlignment = Alignment.CenterVertically
@@ -230,8 +251,18 @@ fun FileNameItem(
                 .padding(start = 16.dp)
                 .weight(1f)
             ,
-            text = taskName
+            text = task.oldName
         )
+        if (checked) {
+            Text(
+                modifier = Modifier
+                    .size(width = 100.dp, 20.dp)
+                    .padding(start = 16.dp)
+                    .weight(1f),
+                text = task.newName + "." + task.extension,
+                color = Color.Blue
+            )
+        }
         Checkbox(
             checked = checked,
             onCheckedChange = onCheckedChange
@@ -241,48 +272,6 @@ fun FileNameItem(
             Icon(Icons.Filled.Close, contentDescription = "Close")
         }*/
     }
-}
-
-
-
-
-fun renameFiles(listOfFiles: List<fileListItem>,folderPath: String,commandList: List<commandLayer>) {
-    for ((index,fileItem) in listOfFiles.withIndex()){
-        /*
-        val commandsTest = listOf(commandLayer(textCommand.removeAll,"",""),
-            commandLayer(textCommand.add,newName,"Start"),
-            commandLayer(textCommand.enumerate,"End","End"))
-        */
-        val oldFilePath = Paths.get(fileItem.file.path)
-        val newFileName = generateFilename(fileItem.file.name,commandList,index)
-        val newFilePath = Paths.get("${folderPath}\\${newFileName}.${fileItem.file.extension}")
-        val newFile = newFilePath.toFile()
-
-        Files.move(oldFilePath, newFilePath, StandardCopyOption.REPLACE_EXISTING)
-        //cleanup
-       // newFile.delete()
-
-    }
-    JOptionPane.showMessageDialog(null, "infoMessage", "InfoBox: " + "Renamed files", JOptionPane.INFORMATION_MESSAGE);
-  //  field
-}
-
-fun generateFilename(oldName: String,commands: List<commandLayer>,index: Int) : String
-{
-    var name = oldName
-    for (c in commands)
-        name = when (c.command) {
-            textCommand.removeAll -> removeAll(name)
-            textCommand.add -> add(name,c.value1,c.value2)
-            textCommand.replace -> replace(name,c.value1,c.value2)
-            textCommand.enumerate -> enumerate(name,index,c.value2)
-            textCommand.lowercase -> lowercase(name)
-            textCommand.uppercase -> uppercase(name)
-            textCommand.removeAmount -> removeAmount(name,c.value1.toInt(),c.value2)
-            textCommand.capitalize -> capitalize(name,c.value1)
-            textCommand.removeUntil -> removeUntil(name,c.value1.toInt(),c.value2)
-        }
-    return name
 }
 
 
