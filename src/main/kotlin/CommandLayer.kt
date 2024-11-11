@@ -4,22 +4,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -36,6 +34,8 @@ fun CommandLayerList(
     list: List<commandLayer> ,
     onCloseTask: (commandLayer) -> Unit,
     programViewModel: ProgramViewModel,
+    onMoveUpTask: (commandLayer) -> Unit,
+    onMoveDownTask: (commandLayer) -> Unit,
 //    updateNewName: (List<FileName>,SnapshotStateList<commandLayer>) -> Unit,
     modifier: Modifier = Modifier,
 
@@ -44,7 +44,8 @@ fun CommandLayerList(
         modifier = modifier
     ) {
         items(list) { c ->
-            CommandLayerItem(layer = c, onClose = { onCloseTask(c) },programViewModel = programViewModel)
+            CommandLayerItem(layer = c, onClose = { onCloseTask(c) },programViewModel = programViewModel,
+                onMoveUp = { onMoveUpTask(c) },onMoveDown = { onMoveDownTask(c) })
         }
     }
 }
@@ -72,10 +73,16 @@ fun CommandLayerItem(
  //   value1: String,
  //   onCheckedChange: (Boolean) -> Unit,
     onClose: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var val1 by rememberSaveable { mutableStateOf("") }
-    var val2 by rememberSaveable { mutableStateOf("") }
+    var val1 by rememberSaveable { mutableStateOf(layer.value1) }
+    var val2 by rememberSaveable { mutableStateOf(layer.value2) }
+    var dropdownExpand by remember { mutableStateOf(false) }
+
+    val pattern = remember { Regex("^\\d+\$") }
+
     Box(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth()
@@ -87,11 +94,29 @@ fun CommandLayerItem(
 
         {
         Row (modifier = modifier.padding(8.dp)) {
+            Column(verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight())
+
+            {
+                IconButton(onClick = onMoveUp) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowUp, contentDescription = "Close", tint = Color(0, 0, 0),
+                        modifier = Modifier
+
+                    )
+                }
+                IconButton(onClick = onMoveDown) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown, contentDescription = "Close", tint = Color(0, 0, 0),
+                        modifier = Modifier
+
+                    )
+                }
+            }
             Column(modifier=Modifier.weight(7f)) {
                 Text(
-     //               modifier = Modifier
-     //                   .padding(start = 8.dp)
-     //                   .weight(1f),
                     text = layer.command.toString(), fontSize = 14.sp, textAlign = TextAlign.Center,modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -100,11 +125,6 @@ fun CommandLayerItem(
                      verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                /*
-                        Checkbox(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange
-                )*/
                     when (layer.command) {
                         TextCommand.add ->{
                                 TextField(
@@ -115,13 +135,36 @@ fun CommandLayerItem(
                                     programViewModel.updateNewName()
                                    // filesList = updateNewName(filesList,functionList)
                                 },
-              //              onValueChange = { value1 = it },
                                 label = { Text("Text")},
                                 maxLines = 1,
                                 modifier = Modifier
                                     .weight(1F)
                                     .padding(2.dp)
-                        )}
+                        )
+                            startStopDropdown(val2,layer,programViewModel)
+
+                        }
+                        TextCommand.enumerate ->{
+                            TextField(
+                                value = val1,
+                                onValueChange ={
+
+                                    if (it.isEmpty() || it.matches(pattern)) {
+
+                                        val1 = it
+                                        layer.value1 = val1
+                                        programViewModel.updateNewName()
+                                    }
+                                },
+                                label = { Text("Start at") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .padding(2.dp)
+                            )
+                            startStopDropdown(val2,layer,programViewModel)
+                        }
                         TextCommand.replace ->{
                             TextField(
                                 value = val1,
@@ -148,12 +191,47 @@ fun CommandLayerItem(
                                 modifier = Modifier.weight(1F)
 
                             )}
-            //            TextCommand.enumerate -> TODO()
-                        TextCommand.removeAmount -> TODO()
-            /*            TextCommand.lowercase -> TODO()
-                        TextCommand.uppercase -> TODO()
-                        TextCommand.capitalize -> TODO()*/
-                        TextCommand.removeUntil -> TODO()
+                        TextCommand.removeAmount -> {
+                            TextField(
+                                value = val1,
+                                onValueChange ={
+
+                                    if (it.isEmpty() || it.matches(pattern)) {
+                                        val1 = it
+                                        layer.value1 = val1
+                                        programViewModel.updateNewName()
+                                    }
+                                },
+                                label = { Text("Remove amount") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .padding(2.dp)
+                            )
+                            startStopDropdown(val2,layer,programViewModel)
+                        }
+
+                        TextCommand.removeUntil -> {
+                            TextField(
+                                value = val1,
+                                onValueChange ={
+
+                                    if (it.isEmpty() || it.count() == 1) {
+                                        val1 = it
+                                        layer.value1 = val1
+                                        programViewModel.updateNewName()
+                                    }
+                                },
+                                label = { Text("Until") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .padding(2.dp)
+                            )
+                            startStopDropdown(val2,layer,programViewModel)
+                        }
                         else ->
                             Text(text = "",
                                 modifier = Modifier.weight(1F))
@@ -180,3 +258,36 @@ fun CommandLayerItem(
     }
 }
 
+@Composable
+fun startStopDropdown(value: String,layer: commandLayer,programViewModel: ProgramViewModel){
+    var dropdownExpand by remember { mutableStateOf(false) }
+    var _value by remember { mutableStateOf(value) }
+    Box() {
+        TextButton(onClick = { dropdownExpand = true }) {
+            Text(_value+" v")
+        }
+        DropdownMenu(
+            expanded = dropdownExpand,
+            onDismissRequest = { dropdownExpand = false }
+        ) {
+            DropdownMenuItem(
+                content = { Text("Start") },
+                onClick = {
+                    dropdownExpand = false
+                    _value = "Start"
+                    layer.value2 = _value
+                    programViewModel.updateNewName()
+                }
+            )
+            DropdownMenuItem(
+                content = { Text("End") },
+                onClick = {
+                    dropdownExpand = false
+                    _value = "End"
+                    layer.value2 = _value
+                    programViewModel.updateNewName()
+                }
+            )
+        }
+    }
+}

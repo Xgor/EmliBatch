@@ -39,6 +39,10 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "EmliBatch"
             packageVersion = "1.0.0"
+            /*
+            windows {
+                iconFile.set(project.file("Emli Icon.ico"))
+            }*/
         }
     }
 }

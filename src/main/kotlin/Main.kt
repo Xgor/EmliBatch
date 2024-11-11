@@ -21,7 +21,10 @@ import TextCommands
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,15 +77,20 @@ fun App(programViewModel: ProgramViewModel = viewModel()) {
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Column(modifier = Modifier.weight(1F)) {
-            Button(onClick = {
-                programViewModel.selectFolderPath()
-            }) {
-                Text(gameUiState.folderPath)
+        Column(modifier = Modifier.weight(1F).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+            Column(verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Button(onClick = {
+                    programViewModel.selectFolderPath()
+                }) {
+                    Text(gameUiState.folderPath)
+                }
             }
 
            // modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.TopStart)
-            CommandLayerList(gameUiState.commandList,onCloseTask = { task -> programViewModel.RemoveCommand(task) },programViewModel)
+            CommandLayerList(gameUiState.commandList,onCloseTask = { task -> programViewModel.RemoveCommand(task) },
+                onMoveUpTask = { task -> programViewModel.MoveCommand(task,-1) },
+                onMoveDownTask = { task -> programViewModel.MoveCommand(task,1) },programViewModel=programViewModel)
             Box() {
                 IconButton(onClick = { dropdownExpand = true }) {
                     Icon(Icons.Default.Add, contentDescription = "Localized description")
@@ -152,16 +160,22 @@ fun App(programViewModel: ProgramViewModel = viewModel()) {
                             programViewModel.AddCommand(TextCommand.capitalize)
                         }
                     )
-                    /*
+
                     DropdownMenuItem(
 
                         content = { Text("removeUntil") },
-                        onClick = { }
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.removeUntil)
+                        }
                     )
                     DropdownMenuItem(
                         content = { Text("removeAmount") },
-                        onClick = { }
-                    )*/
+                        onClick = {
+                            dropdownExpand = false
+                            programViewModel.AddCommand(TextCommand.removeAmount)
+                        }
+                    )
                 }
             }
 
@@ -251,7 +265,7 @@ fun FileNameItem(
                 .padding(start = 16.dp)
                 .weight(1f)
             ,
-            text = task.oldName
+            text = task.oldName + "." + task.extension
         )
         if (checked) {
             Text(
@@ -279,7 +293,15 @@ fun FileNameItem(
 
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
+//    val icon = painterResource("icon.ico")
+
+    val state = rememberWindowState(
+        width = 1280.dp,
+        height = 720.dp,
+    )
+    Window(onCloseRequest = ::exitApplication,
+        title = "Emli Batch",
+        state = state) {
         App()
     }
 }

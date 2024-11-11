@@ -49,14 +49,40 @@ fun capitalize(fileName: String,modifier: String): String
     return fileName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
 
-fun removeAmount(fileName: String,amount: Int,modifier: String): String
+fun removeAmount(fileName: String,amount: Int?,modifier: String): String
 {
-    // TODO
-    return fileName
+    if(amount == null) return fileName
+
+    var name = fileName
+    if(modifier == "End") {
+        name = fileName.removeRange(Math.max(fileName.length-amount,0),fileName.length)
+    }
+    else{
+        name = fileName.removeRange(0,Math.min(amount,fileName.length))
+    }
+
+    return name
 }
 
-fun removeUntil(fileName: String,amount: Int,modifier: String): String
+fun removeUntil(fileName: String,char: String,modifier: String): String
 {
+   // var indexToRemove = -1
+    if(char.length == 0) return fileName
+    var name = fileName
+    if(modifier == "End") {
+        val indexToRemove = fileName.lastIndexOf(char.first())
+        if(indexToRemove != -1)
+            name = fileName.removeRange(indexToRemove,fileName.length)
+        else
+            removeAll(fileName)
+    }
+    else{
+        val indexToRemove = fileName.indexOf(char.first())+1
+        if(indexToRemove != -1)
+            name = fileName.removeRange(0,indexToRemove)
+        else
+            removeAll(fileName)
+    }
     // TODO
-    return fileName
+    return name
 }
