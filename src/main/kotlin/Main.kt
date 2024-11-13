@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -18,8 +17,7 @@ import java.nio.file.StandardCopyOption
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
 import TextCommands
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
@@ -29,6 +27,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.nio.file.attribute.FileTime
+import java.sql.Time
+import java.time.LocalDateTime
 
 private fun getCommandList() = List(0) { i -> commandLayer(TextCommand.removeAll, "","") }
 
@@ -57,6 +58,8 @@ fun App(programViewModel: ProgramViewModel = viewModel()) {
     var newNameField by remember { mutableStateOf("World") }
   //  var checkField by remember { mutableStateOf(true) }
     var dropdownExpand by remember { mutableStateOf(false) }
+    var sortDropdownExpand by remember { mutableStateOf(false) }
+
     var canRename by remember { mutableStateOf(false) }
   //  var listOfFiles by remember { mutableStateOf(mutableListOf<fileListItem>()) }
 
@@ -197,9 +200,77 @@ fun App(programViewModel: ProgramViewModel = viewModel()) {
                 Text("rename")
             }
         }
-        FileNamesList(gameUiState.fileList,modifier = Modifier.weight(1F), viewModel = programViewModel)
 
+        Column (modifier = Modifier.weight(1F)){
+            Row()
+            {
+                TextField(
+                    value = gameUiState.filterText,
+                    onValueChange ={
+
+                        programViewModel.updateFilterField(it)
+                        // filesList = updateNewName(filesList,functionList)
+                    },
+                    label = { Text("Filter")},
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1F)
+                        .padding(2.dp)
+                )
+                Box() {
+                    TextButton(onClick = { sortDropdownExpand = true }) {
+                        Text(gameUiState.sortType)
+                    }
+                    DropdownMenu(
+                        expanded = sortDropdownExpand,
+                        onDismissRequest = { sortDropdownExpand = false }
+                    ) {
+                        DropdownMenuItem(
+                            content = { Text("Name (A-Z)") },
+                            onClick = {
+                                sortDropdownExpand = false
+                                programViewModel.SetSortType("Name")
+                            }
+                        )
+                        DropdownMenuItem(
+                            content = { Text("File Size") },
+                            onClick = {
+                                sortDropdownExpand = false
+                                programViewModel.SetSortType("File Size")
+                            }
+                        )
+                        DropdownMenuItem(
+                            content = { Text("createdTime (Old->New)") },
+                            onClick = {
+                                sortDropdownExpand = false
+                                programViewModel.SetSortType("createdTime")
+                            }
+                        )
+                        DropdownMenuItem(
+                            content = { Text("modifiedTime (Old->New)") },
+                            onClick = {
+                                sortDropdownExpand = false
+                                programViewModel.SetSortType("modifiedTime")
+                            }
+                        )
+
+                    }
+                }
+                var invertFilesIcon by remember { mutableStateOf(Icons.Default.KeyboardArrowDown) }
+                IconButton(onClick = {
+                    if(gameUiState.sortInvert)
+                        invertFilesIcon = Icons.Default.KeyboardArrowDown
+                    else
+                        invertFilesIcon = Icons.Default.KeyboardArrowUp
+                    programViewModel.InvertSorting()
+
+                }) {
+                    Icon(invertFilesIcon, contentDescription = "Localized description")
+                }
+            }
+            FileNamesList(gameUiState.fileList, viewModel = programViewModel)
         }
+    }
  //   }
 }
 
@@ -224,10 +295,11 @@ fun FileNamesList(
         }
     }
 }
+data class FileName(val id: Int, val oldName: String, var newName: String, var extension: String, var fileSize: Long,
+                    var createdTime: FileTime?, var modifiedTime: FileTime?, var enabled: Boolean = true)
+fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","","",0, null,null) }
 
-fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","","") }
 
-data class FileName(val id: Int, val oldName: String,var newName: String,var extension: String,var enabled: Boolean = true)
 
 
 

@@ -6,6 +6,8 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
 
@@ -23,6 +25,7 @@ class ProgramViewModel : ViewModel() {
 
     private val chooser = JFileChooser()
     var folderFileList = mutableListOf<FileName>()
+    var filterFileList = mutableListOf<FileName>()
     // Game UI state
     private var _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -33,28 +36,82 @@ class ProgramViewModel : ViewModel() {
     }
 
 
-    fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","","") }
+  //  fun getFileNames() = List(30) { i -> FileName(i, "Task # $i","","") }
 
     fun selectFolderPath(){
         val returnVal = chooser.showOpenDialog(null)
         if(returnVal == JFileChooser.APPROVE_OPTION) {
             loadFolder(chooser.selectedFile.path)
-
         }
     }
+    fun SetSortType(newSortType: String){
 
-    fun loadFolder(path: String)
-    {
+        _uiState.update { currentState ->
+            currentState.copy(sortType = newSortType)
+        }
+        updateFilterField(_uiState.value.filterText)
+        updateNewName()
+    }
+
+    fun InvertSorting(){
+        _uiState.update { currentState ->
+            currentState.copy(sortInvert = !_uiState.value.sortInvert)
+        }
+        updateFilterField(_uiState.value.filterText)
+        updateNewName()
+    }
+
+    fun updateFilterField(string: String){
+
+        filterFileList = mutableListOf<FileName>()
+        for (file in folderFileList) {
+            val name = "${lowercase(file.oldName)}.${file.extension}"
+            if (name.contains(lowercase(string)))
+                filterFileList.add(file)
+        }
+        if(_uiState.value.sortType == "File Size")
+        {
+            filterFileList.sortBy { it.fileSize }
+        }
+        if(_uiState.value.sortType == "createdTime")
+        {
+            filterFileList.sortBy { it.createdTime?.toMillis() }
+        }
+        if(_uiState.value.sortType == "modifiedTime")
+        {
+            filterFileList.sortBy { it.modifiedTime?.toMillis() }
+        }
+
+        if(_uiState.value.sortInvert)
+            filterFileList.reverse()
+        _uiState.update { currentState ->
+            currentState.copy(filterText = string, fileList = filterFileList)
+        }
+
+    }
+
+    fun loadFolder(path: String) {
         val folder = File(path)
 
         folderFileList.clear()
         for ((index ,file) in folder.listFiles().asList().withIndex()){
             //          listOfFiles += fileListItem(file,true)
-            folderFileList.add(FileName(index,file.nameWithoutExtension,generateFilename(file.nameWithoutExtension,_commandList,index),file.extension))
+            val path = Paths.get(file.path)
+           val attributes = Files.readAttributes<BasicFileAttributes>(path, BasicFileAttributes::class.java)
+//            file.las
+            folderFileList.add(FileName(index,
+                file.nameWithoutExtension,
+                generateFilename(file.nameWithoutExtension,_commandList,index),
+                file.extension,
+                attributes.size(),
+                attributes.lastModifiedTime(),
+                attributes.lastAccessTime()))
         }
         _uiState.update { currentState ->
             currentState.copy(folderPath = path, fileList = folderFileList)
         }
+
+        //updateNewName()
         updateCanRename()
         _filesList.apply { folderFileList }
     }
@@ -83,6 +140,7 @@ class ProgramViewModel : ViewModel() {
 
     }
 
+    /*
     fun getFileList(path: String,commandList: List<commandLayer>): List<FileName>
     {
         val folder = File(path)
@@ -90,17 +148,21 @@ class ProgramViewModel : ViewModel() {
         val fileList = mutableListOf<FileName>()
         for ((index,file) in folder.listFiles().asList().withIndex()){
             //          listOfFiles += fileListItem(file,true)
-            fileList.add(FileName(index,file.nameWithoutExtension,generateFilename(file.nameWithoutExtension,commandList,index),file.extension))
+            fileList.add(FileName(index,
+                file.nameWithoutExtension,
+                generateFilename(file.nameWithoutExtension,commandList,index)
+                ,file.extension
+                ,file.usableSpace))
         }
         return fileList.toMutableStateList()
-    }
+    }*/
 
     fun changeCheckedFile(fileName: FileName,boolean: Boolean){
         val index = folderFileList.indexOf(fileName)
         folderFileList[index].enabled = boolean
         fileName.enabled = boolean
         _uiState.update { currentState ->
-            currentState.copy(fileList = folderFileList)
+            currentState.copy(fileList = filterFileList)
         }
         updateNewName()
     }
@@ -108,14 +170,13 @@ class ProgramViewModel : ViewModel() {
     fun renameFiles() {
         if(!_uiState.value.canRename) return
         var index = 0
-        for (fileItem in folderFileList){
+        for (fileItem in filterFileList){
 
             if (!fileItem.enabled)
                 return
             index++
         //    fileItem.label
             val oldFilePath = Paths.get("${_uiState.value.folderPath}\\${fileItem.oldName}.${fileItem.extension}")
-                    //    val newFileName = generateFilename(fileItem.file.name,commandList,index)
 
             val newFilePath = Paths.get("${_uiState.value.folderPath}\\${fileItem.newName}.${fileItem.extension}")
             val newFile = newFilePath.toFile()
@@ -133,12 +194,12 @@ class ProgramViewModel : ViewModel() {
     }
     fun fakeUpdate()
     {
-        var c =  folderFileList.toList()
+      //  var c =  folderFileList.toList()
         _uiState.update { currentState ->
             currentState.copy(fileList = listOf<FileName>())
         }
         _uiState.update { currentState ->
-            currentState.copy(fileList = c)
+            currentState.copy(fileList = filterFileList)
         }
     }
 
@@ -177,19 +238,18 @@ class ProgramViewModel : ViewModel() {
         val c = command
         _commandList.remove(command)
         _commandList.add(index,c)
-        _uiState.updateAndGet { currentState ->
+        _uiState.getAndUpdate { currentState ->
             currentState.copy(commandList = _commandList.toList())
         }
         updateNewName()
     }
-
 
     fun updateNewName()
     {
         if (folderFileList != null && folderFileList.isEmpty()) return
 
         var index = 0
-        for (file in folderFileList){
+        for (file in filterFileList){
             if (!file.enabled) {
                 file.newName = ""
                 continue
@@ -198,8 +258,9 @@ class ProgramViewModel : ViewModel() {
             index++
 
         }
+
         _uiState.updateAndGet { currentState ->
-            currentState.copy(fileList = folderFileList)
+            currentState.copy(fileList = filterFileList)
         }
         updateCanRename()
         fakeUpdate()
@@ -223,6 +284,4 @@ class ProgramViewModel : ViewModel() {
             }
         return name
     }
-
-
 }

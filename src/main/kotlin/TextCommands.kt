@@ -83,6 +83,5 @@ fun removeUntil(fileName: String,char: String,modifier: String): String
         else
             removeAll(fileName)
     }
-    // TODO
     return name
 }
