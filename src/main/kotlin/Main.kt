@@ -360,10 +360,6 @@ fun FileNameItem(
     }
 }
 
-
-
-
-
 fun main() = application {
 //    val icon = painterResource("icon.ico")
 

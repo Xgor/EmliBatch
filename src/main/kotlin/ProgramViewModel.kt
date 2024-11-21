@@ -107,6 +107,8 @@ class ProgramViewModel : ViewModel() {
                 attributes.lastModifiedTime(),
                 attributes.lastAccessTime()))
         }
+
+        filterFileList = folderFileList
         _uiState.update { currentState ->
             currentState.copy(folderPath = path, fileList = folderFileList)
         }
@@ -140,26 +142,9 @@ class ProgramViewModel : ViewModel() {
 
     }
 
-    /*
-    fun getFileList(path: String,commandList: List<commandLayer>): List<FileName>
-    {
-        val folder = File(path)
-        // listOfFiles.clear()
-        val fileList = mutableListOf<FileName>()
-        for ((index,file) in folder.listFiles().asList().withIndex()){
-            //          listOfFiles += fileListItem(file,true)
-            fileList.add(FileName(index,
-                file.nameWithoutExtension,
-                generateFilename(file.nameWithoutExtension,commandList,index)
-                ,file.extension
-                ,file.usableSpace))
-        }
-        return fileList.toMutableStateList()
-    }*/
-
     fun changeCheckedFile(fileName: FileName,boolean: Boolean){
-        val index = folderFileList.indexOf(fileName)
-        folderFileList[index].enabled = boolean
+        val index = filterFileList.indexOf(fileName)
+        filterFileList[index].enabled = boolean
         fileName.enabled = boolean
         _uiState.update { currentState ->
             currentState.copy(fileList = filterFileList)
