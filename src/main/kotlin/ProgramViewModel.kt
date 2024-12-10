@@ -130,8 +130,8 @@ class ProgramViewModel : ViewModel() {
         }
         if(hasRemoveAll and !hasEnumerate) canRename = false
         else
-            for (file in folderFileList)
-                for (file2 in folderFileList)
+            for (file in filterFileList)
+                for (file2 in filterFileList)
                     if(file != file2)
                         if(file.oldName == file2.newName)
                             canRename = false

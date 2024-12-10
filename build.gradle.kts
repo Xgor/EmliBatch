@@ -38,7 +38,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "EmliBatch"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
             /*
             windows {
                 iconFile.set(project.file("Emli Icon.ico"))
